@@ -24,6 +24,7 @@ module ReversePolish
 
     def initialize
       @stack = []
+      @mem = 0
     end
 
     def input(token)
@@ -37,20 +38,30 @@ module ReversePolish
         when /^[+-\/\*]$/                                     # arithmetic
           op1, op2 = @stack.checked_pop(2)
           op1.send token.to_sym, op2
-        when /c/i                                             # reset stack
+        when /^c$/i                                             # reset stack
           @stack.clear
           nil
-        when /sum/i                                           # summation
+        when /^mc$/i
+          @mem = 0
+        when /^mr$/i
+          @mem
+        when /^m\+$/i
+          op = @stack.checked_pop[0]
+          @mem += op
+        when /^m-$/i
+          op = @stack.checked_pop[0]
+          @mem -= op
+        when /^sum$/i                                           # summation
           # don't use @stack.inject directly as it breaks encapsulation
           result = @stack.checked_pop(@stack.size).inject(0, :+)
           @stack.clear
           result
-        when /mul/i
+        when /^mul$/i
           # don't use @stack.inject directly as it breaks encapsulation
           result = @stack.checked_pop(@stack.size).inject(:*) || 0
           @stack.clear
           result
-        when /!/                                              # factorial
+        when /^!$/                                              # factorial
           op = @stack.checked_pop[0]
           #result = (1..op.to_i).inject(1, :*)
           result = Math.gamma(op + 1)
@@ -76,7 +87,7 @@ module ReversePolish
       @calculator = Calculator.new
     end
 
-    def run(prompt='> ', quit='q')
+    def run(prompt='> ', quit='q', help='help')
       puts "type '#{quit}' to quit"
       loop do
         begin
@@ -85,6 +96,10 @@ module ReversePolish
           tokens = line.split
           tokens.each do |token|
             return if token == quit
+            if token == help
+              output_help
+              next
+            end
             result = @calculator.input token
             output(result) if result
           end
@@ -99,6 +114,14 @@ module ReversePolish
       end
     end
 
+    def output_help
+      puts "number:    integer, float, scientific"
+      puts "operators: +, -, *, /"
+      puts "constants: pi, e"
+      puts "functions: sum, mul, !, cos, sin, ..."
+      puts "memory:    mc, mr, m+, m-"
+    end
+
     def output(num)
       if num == num.to_i.to_f
         puts num.to_i
@@ -111,6 +134,6 @@ end
 
 if __FILE__ == $0
   rp = ReversePolish::CalculatorProgram.new
-  rp.run('> ', 'q')
+  rp.run('> ', 'q', 'h')
   puts "goodbye"
 end
