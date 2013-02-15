@@ -1,12 +1,12 @@
 #!/usr/bin/env ruby
 # Ed Yu
 
-class NilClass
-  def strip
-    puts "\ngoodbye"
-    exit
-  end
-end
+#class NilClass
+#  def strip
+#    puts "\ngoodbye"
+#    exit
+#  end
+#end
 
 class StackUnderflowError < IndexError
 end
@@ -19,37 +19,48 @@ class Array
 end
 
 module ReversePolish
+
   class Calculator
 
     def initialize
       @stack = []
     end
 
-    def calculate(token)
+    def input(token)
       result = case token
-        when /^[-+]?(\d*\.\d+|\d+\.\d*)$/
+        when /^[-+]?(\d*\.\d+|\d+\.\d*)$/                     # float
           token.to_f
-        when /^[-+]?\d+$/
+        when /^[-+]?(\d*\.\d+|\d+\.\d*|\d+)(e|E)[-+]?\d+$/    # scientific
           token.to_f
-        when /^[+-\/\*]$/
+        when /^[-+]?\d+$/                                     # integer
+          token.to_f
+        when /^[+-\/\*]$/                                     # arithmetic
           op1, op2 = @stack.checked_pop(2)
           op1.send token.to_sym, op2
-        when /sum/i
+        when /c/i                                             # reset stack
+          @stack.clear
+          nil
+        when /sum/i                                           # summation
           # don't use @stack.inject directly as it breaks encapsulation
           result = @stack.checked_pop(@stack.size).inject(0, :+)
           @stack.clear
           result
-        when /!/
+        when /mul/i
+          # don't use @stack.inject directly as it breaks encapsulation
+          result = @stack.checked_pop(@stack.size).inject(:*) || 0
+          @stack.clear
+          result
+        when /!/                                              # factorial
           op = @stack.checked_pop[0]
           #result = (1..op.to_i).inject(1, :*)
           result = Math.gamma(op + 1)
         else
-          method = token.downcase.to_sym
+          method = token.downcase.to_sym                      # math functions
           if Math.respond_to? method
             arity = Math.method(method).arity
             op = @stack.checked_pop(arity)
             Math.send token.to_sym, *op
-          elsif Math.constants.include?(token.upcase.to_sym)
+          elsif Math.constants.include?(token.upcase.to_sym)  # math constants
             Math.const_get(token.upcase.to_sym)
           else #ignore
           end
@@ -60,33 +71,30 @@ module ReversePolish
   end
 
   class CalculatorProgram
+
     def initialize
       @calculator = Calculator.new
     end
 
-    def run
-      puts "type 'q' to quit"
+    def run(quit_cmd)
+      puts "type '#{quit_cmd}' to quit"
       loop do
-        print("> ")
-        line = gets.strip
-        tokens = line.split
-        tokens.each do |token|
-          begin
-            if token == 'q'
-              puts "goodbye"
-              return
-            end
-            result = @calculator.calculate token
-            if result
-              puts result
-            else
-              warn "you must input a number or a function (type 'q' to quit)"
-            end
-          rescue StackUnderflowError => e
-            warn "not enough operands"
-          rescue => e
-            warn e.message
+        begin
+          print("> ")
+          line = gets.strip
+          tokens = line.split
+          tokens.each do |token|
+            return if token == quit_cmd
+            result = @calculator.input token
+            puts result if result
           end
+        rescue NoMethodError => e # EOF
+          return if e.message =~ /strip/
+          warn e.message
+        rescue StackUnderflowError => e
+          warn "not enough operands"
+        rescue => e
+          warn e.message
         end
       end
     end
@@ -95,5 +103,6 @@ end
 
 if __FILE__ == $0
   rp = ReversePolish::CalculatorProgram.new
-  rp.run
+  rp.run('q')
+  puts "goodbye"
 end
