@@ -18,65 +18,79 @@ class Array
   end
 end
 
-class ReversePolish
+class Calculator
 
   def initialize
     @stack = []
   end
 
+  def calculate(token)
+    case token
+    when /^[-+]?(\d*\.\d+|\d+\.\d*)$/
+      op = token.to_f
+      @stack.push op
+      token
+    when /^[-+]?\d+$/
+      op = token.to_f
+      @stack.push op
+      token
+    when /^[+-\/\*]$/
+      op1, op2 = @stack.checked_pop(2)
+      result = op1.send token.to_sym, op2
+      @stack.push result
+      result
+    when /sum/i
+      # don't use @stack.inject directly as it breaks encapsulation
+      result = @stack.checked_pop(@stack.size).inject(0, :+)
+      @stack.clear
+      @stack.push result
+      result
+    when /!/
+      op = @stack.checked_pop[0]
+      #result = (1..op.to_i).inject(1, :*)
+      result = Math.gamma(op + 1)
+      @stack.push result
+      result
+    else
+      method = token.downcase.to_sym
+      if Math.respond_to? method
+        arity = Math.method(method).arity
+        op = @stack.checked_pop(arity)
+        result = Math.send token.to_sym, *op
+        @stack.push result
+        result
+      elsif Math.constants.include?(token.upcase.to_sym)
+        op = Math.const_get(token.upcase.to_sym)
+        @stack.push op
+        op
+      else #ignore
+      end
+    end
+  end
+end
+
+class CalculatorProgram
+  def initialize
+    @calculator = Calculator.new
+  end
+
   def run
     puts "type 'q' to quit"
     loop do
-      quit = false
       print("> ")
       line = gets.strip
       tokens = line.split
       tokens.each do |token|
         begin
-          case token
-          when "q"
+          if token == 'q'
             puts "goodbye"
-            exit
-          when /^[-+]?(\d*\.\d+|\d+\.\d*)$/
-            op = token.to_f
-            @stack.push op
-            puts token
-          when /^[-+]?\d+$/
-            op = token.to_f
-            @stack.push op
-            puts token
-          when /^[+-\/\*]$/
-            op1, op2 = @stack.checked_pop(2)
-            result = op1.send token.to_sym, op2
-            @stack.push result
-            puts result
-          when /sum/i
-            # don't use @stack.inject directly as it breaks encapsulation
-            result = @stack.checked_pop(@stack.size).inject(0, :+)
-            @stack.clear
-            @stack.push result
-            puts result
-          when /!/
-            op = @stack.checked_pop[0]
-            #result = (1..op.to_i).inject(1, :*)
-            result = Math.gamma(op + 1)
-            @stack.push result
+            return
+          end
+          result = @calculator.calculate token
+          if result
             puts result
           else
-            method = token.downcase.to_sym
-            if Math.respond_to? method
-              arity = Math.method(method).arity
-              op = @stack.checked_pop(arity)
-              result = Math.send token.to_sym, *op
-              @stack.push result
-              puts result
-            elsif Math.constants.include?(token.upcase.to_sym)
-              op = Math.const_get(token.upcase.to_sym)
-              @stack.push op
-              puts op
-            else
-              warn "you must input a number or a function"
-            end
+            warn "you must input a number or a function (type 'q' to quit)"
           end
         rescue StackUnderflowError => e
           warn "not enough operands"
@@ -88,6 +102,7 @@ class ReversePolish
   end
 end
 
-rp = ReversePolish.new
-
-rp.run
+if __FILE__ == $0
+  rp = CalculatorProgram.new
+  rp.run
+end
