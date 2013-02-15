@@ -8,6 +8,16 @@ class NilClass
   end
 end
 
+class StackUnderflowError < IndexError
+end
+
+class Array
+  def checked_pop(n=1)
+    raise StackUnderflowError unless length >= n
+    pop(n)
+  end
+end
+
 class ReversePolish
 
   def initialize
@@ -32,40 +42,27 @@ class ReversePolish
             @stack.push op
             puts token
           when /^[-+]?\d+$/
-            op = token.to_i
+            op = token.to_f
             @stack.push op
             puts token
           when /^[+-\/\*]$/
-            if @stack.length < 2
-              warn "not enough operands"
-              next
-            end
-            op1, op2 = @stack.pop(2)
+            op1, op2 = @stack.checked_pop(2)
             result = op1.send token.to_sym, op2
             @stack.push result
             puts result
           when /sum/i
-            result = @stack.inject(:+) || 0
+            result = @stack.inject(0, :+)
             @stack.clear
             @stack.push result
             puts result
           when /!/
-            if @stack.length < 1
-              warn "not enough operands"
-              next
-            end
-            op = @stack.pop
+            op = @stack.checked_pop
             result = (1..op.to_i).inject(:*) || 1
             @stack.push result
             puts result
           else
-            # ignore
             if Math.respond_to? token.downcase.to_sym
-              if @stack.length < 1
-                warn "not enough operands"
-                next
-              end
-              op = @stack.pop
+              op = @stack.checked_pop
               result = Math.send token.to_sym, op
               @stack.push result
               puts result
@@ -77,6 +74,8 @@ class ReversePolish
               warn "you must input a number or a function"
             end
           end
+        rescue StackUnderflowError => e
+          warn "not enough operands"
         rescue => e
           warn e.message
         end
