@@ -51,19 +51,22 @@ class ReversePolish
             @stack.push result
             puts result
           when /sum/i
-            result = @stack.inject(0, :+)
+            # don't use @stack.inject directly as it breaks encapsulation
+            result = @stack.checked_pop(@stack.size).inject(0, :+)
             @stack.clear
             @stack.push result
             puts result
           when /!/
             op = @stack.checked_pop
-            result = (1..op.to_i).inject(:*) || 1
+            result = (1..op.to_i).inject(1, :*)
             @stack.push result
             puts result
           else
-            if Math.respond_to? token.downcase.to_sym
-              op = @stack.checked_pop
-              result = Math.send token.to_sym, op
+            method = token.downcase.to_sym
+            if Math.respond_to? method
+              arity = Math.method(method).arity
+              op = @stack.checked_pop(arity)
+              result = Math.send token.to_sym, *op
               @stack.push result
               puts result
             elsif Math.constants.include?(token.upcase.to_sym)
