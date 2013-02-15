@@ -1,6 +1,13 @@
 #!/usr/bin/env ruby
 # Ed Yu
 
+class NilClass
+  def chomp
+    puts "goodbye"
+    exit
+  end
+end
+
 class ReversePolish
 
   def initialize
