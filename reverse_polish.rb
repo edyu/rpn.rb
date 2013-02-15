@@ -2,8 +2,8 @@
 # Ed Yu
 
 class NilClass
-  def chomp
-    puts "goodbye"
+  def strip
+    puts "\ngoodbye"
     exit
   end
 end
@@ -16,10 +16,10 @@ class ReversePolish
 
   def run
     puts "type 'q' to quit"
-    while true
+    loop do
       quit = false
       print("> ")
-      line = gets.chomp.strip
+      line = gets.strip
       tokens = line.split
       tokens.each do |token|
         begin
@@ -30,18 +30,17 @@ class ReversePolish
           when /^[-+]?(\d*\.\d+|\d+\.\d*)$/
             op = token.to_f
             @stack.push op
-            puts op
+            puts token
           when /^[-+]?\d+$/
             op = token.to_i
             @stack.push op
-            puts op
+            puts token
           when /^[+-\/\*]$/
             if @stack.length < 2
-              puts "not enough operands"
+              warn "not enough operands"
               next
             end
-            op2 = @stack.pop
-            op1 = @stack.pop
+            op1, op2 = @stack.pop(2)
             result = op1.send token.to_sym, op2
             @stack.push result
             puts result
@@ -52,7 +51,7 @@ class ReversePolish
             puts result
           when /!/
             if @stack.length < 1
-              puts "not enough operands"
+              warn "not enough operands"
               next
             end
             op = @stack.pop
@@ -63,7 +62,7 @@ class ReversePolish
             # ignore
             if Math.respond_to? token.downcase.to_sym
               if @stack.length < 1
-                puts "not enough operands"
+                warn "not enough operands"
                 next
               end
               op = @stack.pop
@@ -75,11 +74,11 @@ class ReversePolish
               @stack.push op
               puts op
             else
-              puts "you must input a number or a
+              warn "you must input a number or a function"
             end
           end
         rescue => e
-          puts e.message
+          warn e.message
         end
       end
     end
