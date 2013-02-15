@@ -38,7 +38,7 @@ module ReversePolish
         when /^[+-\/\*]$/                                     # arithmetic
           op1, op2 = @stack.checked_pop(2)
           op1.send token.to_sym, op2
-        when /^c$/i                                             # reset stack
+        when /^c$/i                                           # reset stack
           @stack.clear
           nil
         when /^mc$/i
@@ -51,7 +51,7 @@ module ReversePolish
         when /^m-$/i
           op = @stack.checked_pop[0]
           @mem -= op
-        when /^sum$/i                                           # summation
+        when /^sum$/i                                         # summation
           # don't use @stack.inject directly as it breaks encapsulation
           result = @stack.checked_pop(@stack.size).inject(0, :+)
           @stack.clear
@@ -61,7 +61,7 @@ module ReversePolish
           result = @stack.checked_pop(@stack.size).inject(:*) || 0
           @stack.clear
           result
-        when /^!$/                                              # factorial
+        when /^!$/                                            # factorial
           op = @stack.checked_pop[0]
           #result = (1..op.to_i).inject(1, :*)
           result = Math.gamma(op + 1)
@@ -87,7 +87,7 @@ module ReversePolish
       @calculator = Calculator.new
     end
 
-    def run(prompt='> ', quit='q', help='help')
+    def run(prompt='> ', quit='q', help='h')
       puts "type '#{quit}' to quit"
       loop do
         begin
