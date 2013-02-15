@@ -57,8 +57,9 @@ class ReversePolish
             @stack.push result
             puts result
           when /!/
-            op = @stack.checked_pop
-            result = (1..op.to_i).inject(1, :*)
+            op = @stack.checked_pop[0]
+            #result = (1..op.to_i).inject(1, :*)
+            result = Math.gamma(op + 1)
             @stack.push result
             puts result
           else
