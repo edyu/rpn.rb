@@ -41,6 +41,9 @@ module ReversePolish
         when /^c$/i                                           # reset stack
           @stack.clear
           nil
+        when /^p$/i                                           # print stack
+          puts @stack.to_s
+          nil
         when /^mc$/i
           @mem = 0
         when /^mr$/i
