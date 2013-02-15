@@ -76,17 +76,17 @@ module ReversePolish
       @calculator = Calculator.new
     end
 
-    def run(quit_cmd)
-      puts "type '#{quit_cmd}' to quit"
+    def run(prompt='> ', quit='q')
+      puts "type '#{quit}' to quit"
       loop do
         begin
-          print("> ")
+          print(prompt)
           line = gets.strip
           tokens = line.split
           tokens.each do |token|
-            return if token == quit_cmd
+            return if token == quit
             result = @calculator.input token
-            puts result if result
+            output(result) if result
           end
         rescue NoMethodError => e # EOF
           return if e.message =~ /strip/
@@ -98,11 +98,19 @@ module ReversePolish
         end
       end
     end
+
+    def output(num)
+      if num == num.to_i.to_f
+        puts num.to_i
+      else
+        puts num
+      end
+    end
   end
 end
 
 if __FILE__ == $0
   rp = ReversePolish::CalculatorProgram.new
-  rp.run('q')
+  rp.run('> ', 'q')
   puts "goodbye"
 end
